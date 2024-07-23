@@ -23,4 +23,4 @@ Link Bot : [CELL MEGA Wallet](https://t.me/cEllcoin_bot/app?startapp=6761995095)
 
 # NOTED !!!
 
--Untuk stop auto mining lalu ke akun selanjutnya hanya dengan CTRL + C
+- Untuk stop auto mining lalu ke akun selanjutnya hanya dengan CTRL + C
