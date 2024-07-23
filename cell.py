@@ -1,27 +1,27 @@
 import requests
 import json
 import time
+import os
 from datetime import datetime, timedelta
-import pytz  # Import pytz library for timezone handling
+import pytz
+from colorama import Fore, Style
 
 # Function to read authorization token from auth.txt file
 def read_auth_from_file():
+    auth_tokens = []
     try:
         with open('auth.txt', 'r') as f:
-            authorization = f.read().strip()
-            return authorization
+            for line in f:
+                authorization = line.strip()
+                auth_tokens.append(authorization)
+        return auth_tokens
     except FileNotFoundError:
         print("Error: auth.txt file not found.")
-        return None
+        return []
 
 # Function to fetch user details
-def user_detail():
+def user_detail(authorization):
     url = "https://cellcoin.org/users/session"
-    
-    # Read authorization token from auth.txt
-    authorization = read_auth_from_file()
-    if not authorization:
-        return None
     
     headers = {
         "accept": "*/*",
@@ -49,28 +49,28 @@ def user_detail():
         
         # Example: Extracting user information from the JSON response
         user_id = data.get('user', {}).get('ID', '')
-        nama = data.get('user', {}).get('first_name', '')
+        first_name = data.get('user', {}).get('first_name', '')
         balance = data.get('cell', {}).get('balance', '')
         energy_amount = data.get('cell', {}).get('energy_amount', '')
-        click = data.get('cell', {}).get('click_level', '')
-        energy = data.get('cell', {}).get('energy_level', '')
-        mining_speed = data.get('cell', {}).get('mining_speed_level', '')
-        multiplier = data.get('cell', {}).get('multiplier_level', '')
-        storage = data.get('cell', {}).get('storage_level', '')
-        storage_fill = data.get('cell', {}).get('storage_fills_at', '')
+        click_level = data.get('cell', {}).get('click_level', '')
+        energy_level = data.get('cell', {}).get('energy_level', '')
+        mining_speed_level = data.get('cell', {}).get('mining_speed_level', '')
+        multiplier_level = data.get('cell', {}).get('multiplier_level', '')
+        storage_level = data.get('cell', {}).get('storage_level', '')
+        storage_fills_at = data.get('cell', {}).get('storage_fills_at', '')
         
-        # Return whatever information you need
+        # Return relevant information
         return {
             'user_id': user_id,
-            'nama': nama,
+            'first_name': first_name,
             'balance': balance,
             'energy_amount': energy_amount,
-            'click': click,
-            'energy': energy,
-            'mining_speed': mining_speed,
-            'multiplier': multiplier,
-            'storage': storage,
-            'storage_fill': storage_fill  # Added storage_fill to return
+            'click_level': click_level,
+            'energy_level': energy_level,
+            'mining_speed_level': mining_speed_level,
+            'multiplier_level': multiplier_level,
+            'storage_level': storage_level,
+            'storage_fills_at': storage_fills_at
         }
     
     except requests.exceptions.RequestException as e:
@@ -78,13 +78,8 @@ def user_detail():
         return None
 
 # Function to perform automatic mining
-def auto_mining(clicks_amount=None):
+def auto_mining(authorization, clicks_amount=None):
     url = "https://cellcoin.org/cells/submit_clicks"
-    
-    # Read authorization token from auth.txt
-    authorization = read_auth_from_file()
-    if not authorization:
-        return None
     
     headers = {
         "accept": "*/*",
@@ -107,7 +102,7 @@ def auto_mining(clicks_amount=None):
     try:
         while True:
             # Fetch user details to get current energy_amount
-            user_info = user_detail()
+            user_info = user_detail(authorization)
             if not user_info:
                 return None
             
@@ -138,7 +133,7 @@ def auto_mining(clicks_amount=None):
             response.raise_for_status()  # Raise exception for bad responses (4xx or 5xx)
             
             # Assuming you want to log or print something based on the response
-            print("Auto mining successful for", clicks_amount, "clicks.")
+            print(Fore.GREEN + f"Auto mining successful for {clicks_amount} clicks.")
             
             # Optional: Sleep for a while before next auto mining request
             time.sleep(10)  # Sleep for 10 seconds
@@ -148,13 +143,8 @@ def auto_mining(clicks_amount=None):
         return None
 
 # Function to claim storage after a delay
-def claim_storage_delayed():
+def claim_storage_delayed(authorization):
     url = "https://cellcoin.org/cells/claim_storage"
-    
-    # Read authorization token from auth.txt
-    authorization = read_auth_from_file()
-    if not authorization:
-        return None
     
     headers = {
         "accept": "*/*",
@@ -176,11 +166,11 @@ def claim_storage_delayed():
     
     try:
         # Fetch user details to get storage_fill time
-        user_info = user_detail()
+        user_info = user_detail(authorization)
         if not user_info:
             return None
         
-        storage_fill = user_info['storage_fill']
+        storage_fill = user_info['storage_fills_at']
         
         # Parse the storage_fill time into a timezone-aware datetime object
         storage_fill_time = datetime.fromisoformat(storage_fill).replace(tzinfo=pytz.timezone('Asia/Bangkok'))
@@ -200,14 +190,13 @@ def claim_storage_delayed():
             response.raise_for_status()  # Raise exception for bad responses (4xx or 5xx)
             
             # Assuming you want to print or return the response data
-            print("Claim storage request successful.")
-            print(response.json())  # Print response data
+            print(Fore.GREEN + f"Claim storage successful.")
             
             # Provide confirmation if claim storage is successful
             if response.json().get('success', False):
-                print("Storage claimed successfully!")
+                print(Fore.GREEN + f"Storage claimed successfully!")
             else:
-                print("Failed to claim storage.")
+                print(Fore.RED + f"Failed to claim storage.")
             
             return response.json()
         
@@ -221,13 +210,13 @@ def claim_storage_delayed():
             response.raise_for_status()  # Raise exception for bad responses (4xx or 5xx)
             
             # Assuming you want to print or return the response data
-            print("Claim storage request successful.")
+            print(Fore.GREEN + f"Claim storage request successful.")
             
             # Provide confirmation if claim storage is successful
             if response.json().get('success', False):
-                print("Storage claimed successfully!")
+                print(Fore.GREEN + f"Storage claimed successfully!")
             else:
-                print("Failed to claim storage.")
+                print(Fore.RED + f"Failed to claim storage.")
             
             return response.json()
     
@@ -235,35 +224,78 @@ def claim_storage_delayed():
         print(f"Error sending claim storage request: {e}")
         return None
 
+# Function to print welcome message
+def print_welcome_message():
+    """Function to print a welcome message."""
+    print(r"""      
+
+▒█▀▀▀█ █▀▀█ ░█▀█░ ▒█▄░▒█ 
+░▀▀▀▄▄ ░░▀▄ █▄▄█▄ ▒█▒█▒█ 
+▒█▄▄▄█ █▄▄█ ░░░█░ ▒█░░▀█
+          """)
+    print(Fore.GREEN + Style.BRIGHT + "CELL MEGA Wallet BOT")
+    print(Fore.RED + Style.BRIGHT + "Jangan di edit la bang :)\n\n")
+
+def stop_auto_mining():
+    """Function to stop auto mining when user interrupts."""
+    print("\nMenghentikan auto mining dan menuju ke akun selanjutnya...")
+    time.sleep(2)  # Optional: Add a small delay before clearing the screen
+    
+    # Clear screen using os.system('cls') for Windows or os.system('clear') for Linux/MacOS
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    # Print welcome message again after clearing the screen
+    print_welcome_message()
+
 # Main function to run the script
 def main():
+    print_welcome_message()
     try:
-        # Ask user if they want to claim storage before proceeding
-        claim_choice = input("\nApakah Anda ingin klaim storage ? (y/n): ").strip().lower()
+        # Read all authorization tokens from auth.txt
+        auth_tokens = read_auth_from_file()
+        
+        if not auth_tokens:
+            print("No authorization tokens found. Exiting...")
+            return
+        
+        for authorization in auth_tokens:
+            
+            # Ask user if they want to claim storage before proceeding
+            claim_choice = input(Fore.BLACK + f"\nApakah Anda ingin klaim storage ? (y/n): ").strip().lower()
 
-        if claim_choice == 'y':
-            claim_storage_delayed()  # Claim storage after a delay
+            if claim_choice == 'y':
+                claim_storage_delayed(authorization)  # Claim storage after a delay
+            
+            # Fetch user info before auto mining
+            user_info = user_detail(authorization)
+            if user_info:
+                print("\n============== Detail Akun ===============")
+                print("Nama          :", user_info['first_name'])
+                print("ID            :", user_info['user_id'])
+                print("Balance       :", user_info['balance'])
+                print("Energy        :", user_info['energy_amount'])
+                print("============== Detail Level ===============")
+                print("Click         :", user_info['click_level'])
+                print("Energy        :", user_info['energy_level'])
+                print("Mining Speed  :", user_info['mining_speed_level'])
+                print("Multiplier    :", user_info['multiplier_level'])
+                print("Storage       :", user_info['storage_level'])
+                print("============== Auto Mining ===============")
 
-        user_info = user_detail()
-        if user_info:
-            print("\n============== Detail Akun ===============")
-            print("Nama          :", user_info['nama'])
-            print("ID            :", user_info['user_id'])
-            print("Balance       :", user_info['balance'])
-            print("Energy        :", user_info['energy_amount'])
-            print("============== Detail Level ===============")
-            print("Click         :", user_info['click'])
-            print("Energy        :", user_info['energy'])
-            print("Mining Speed  :", user_info['mining_speed'])
-            print("Multiplier    :", user_info['multiplier'])
-            print("Storage       :", user_info['storage'])
-            print("============== Auto Mining ===============")
+                try:
+                    # Example usage of auto_mining function
+                    auto_mining(authorization, 2000)  # Send 2000 clicks
 
-            # Example usage of auto_mining function
-            auto_mining(1)  # Send 100 clicks
+                except KeyboardInterrupt:
+                    stop_auto_mining()
+                    continue  # Skip to the next account after stopping auto mining
 
-        else:
-            print("Failed to fetch user details.")
+            else:
+                print("Failed to fetch user details for this authorization.")
+            
+            # Delay before proceeding to the next account
+            print(f"Waiting 10 seconds before processing next account...")
+            time.sleep(10)
 
     except KeyboardInterrupt:
         print("\nProses dihentikan oleh pengguna.")
