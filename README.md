@@ -6,6 +6,7 @@ Link Bot : [CELL MEGA Wallet](https://t.me/cEllcoin_bot/app?startapp=6761995095)
 
 - Auto Claim Mining
 - Auto Tap ( bisa diatur )
+- Multi Akun
 
 # Cara Penggunaan :
 
@@ -19,3 +20,7 @@ Link Bot : [CELL MEGA Wallet](https://t.me/cEllcoin_bot/app?startapp=6761995095)
 - buka git bash atau cmd
 - cari foldernya
 - python cell.py
+
+# NOTED !!!
+
+-Untuk stop auto mining lalu ke akun selanjutnya hanya dengan CTRL + C
