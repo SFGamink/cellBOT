@@ -5,40 +5,31 @@ import os
 from datetime import datetime, timedelta
 import pytz
 from colorama import Fore, Style
+import random
 
-# Function to read authorization token from auth.txt file
-def read_auth_from_file():
-    auth_tokens = []
-    try:
-        with open('auth.txt', 'r') as f:
-            for line in f:
-                authorization = line.strip()
-                auth_tokens.append(authorization)
-        return auth_tokens
-    except FileNotFoundError:
-        print("Error: auth.txt file not found.")
-        return []
+# Global headers variable
+headers = {
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "no-cache",
+    "content-type": "application/json",
+    "pragma": "no-cache",
+    "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "x-time-zone": "Asia/Bangkok",
+    "Referer": "https://cell-frontend.s3.us-east-1.amazonaws.com/",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+}
 
 # Function to fetch user details
 def user_detail(authorization):
     url = "https://cellcoin.org/users/session"
     
-    headers = {
-        "accept": "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "authorization": authorization,
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "x-time-zone": "Asia/Bangkok",
-        "Referer": "https://cell-frontend.s3.us-east-1.amazonaws.com/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-    }
+    headers['authorization'] = authorization  # Set authorization token
     
     try:
         response = requests.get(url, headers=headers)
@@ -81,23 +72,7 @@ def user_detail(authorization):
 def auto_mining(authorization, clicks_amount=None):
     url = "https://cellcoin.org/cells/submit_clicks"
     
-    headers = {
-        "accept": "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "authorization": authorization,
-        "cache-control": "no-cache",
-        "content-type": "application/json",
-        "pragma": "no-cache",
-        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "x-time-zone": "Asia/Bangkok",
-        "Referer": "https://cell-frontend.s3.us-east-1.amazonaws.com/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-    }
+    headers['authorization'] = authorization  # Set authorization token
     
     try:
         while True:
@@ -146,23 +121,7 @@ def auto_mining(authorization, clicks_amount=None):
 def claim_storage_delayed(authorization):
     url = "https://cellcoin.org/cells/claim_storage"
     
-    headers = {
-        "accept": "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        "authorization": authorization,
-        "cache-control": "no-cache",
-        "content-type": "application/json",
-        "pragma": "no-cache",
-        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\", \"Microsoft Edge WebView2\";v=\"126\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "x-time-zone": "Asia/Bangkok",
-        "Referer": "https://cell-frontend.s3.us-east-1.amazonaws.com/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
-    }
+    headers['authorization'] = authorization  # Set authorization token
     
     try:
         # Fetch user details to get storage_fill time
@@ -192,12 +151,6 @@ def claim_storage_delayed(authorization):
             # Assuming you want to print or return the response data
             print(Fore.GREEN + f"Claim storage successful.")
             
-            # Provide confirmation if claim storage is successful
-            if response.json().get('success', False):
-                print(Fore.GREEN + f"Storage claimed successfully!")
-            else:
-                print(Fore.RED + f"Failed to claim storage.")
-            
             return response.json()
         
         else:
@@ -215,8 +168,6 @@ def claim_storage_delayed(authorization):
             # Provide confirmation if claim storage is successful
             if response.json().get('success', False):
                 print(Fore.GREEN + f"Storage claimed successfully!")
-            else:
-                print(Fore.RED + f"Failed to claim storage.")
             
             return response.json()
     
@@ -236,6 +187,7 @@ def print_welcome_message():
     print(Fore.GREEN + Style.BRIGHT + "CELL MEGA Wallet BOT")
     print(Fore.RED + Style.BRIGHT + "Jangan di edit la bang :)\n\n")
 
+# Function to stop auto mining when user interrupts
 def stop_auto_mining():
     """Function to stop auto mining when user interrupts."""
     print("\nMenghentikan auto mining dan menuju ke akun selanjutnya...")
@@ -247,40 +199,97 @@ def stop_auto_mining():
     # Print welcome message again after clearing the screen
     print_welcome_message()
 
+# Function to upgrade cell level
+def upgrade_cell_level(authorization, upgrade_option):
+    url = "https://cellcoin.org/cells/levels/upgrade"
+    
+    headers['authorization'] = authorization  # Set authorization token
+    
+    try:
+        data = {
+            "level_type": upgrade_option
+        }
+        
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()  # Raise exception for bad responses (4xx or 5xx)
+        
+        if response.json().get('success', False):
+            print(f"Upgrade {upgrade_option} berhasil!")
+        else:
+            print(f"Upgrade {upgrade_option} gagal.")
+        
+        return response.json()
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Duit anda tidak cukup kocak !!!!")
+        return None
+    
+# Function to perform automatic upgrade
+def perform_auto_upgrade(authorization):
+    upgrade_choices = ["click", "energy", "mining_speed", "multiplier", "storage"]
+    
+    for choice in upgrade_choices:
+        upgrade_cell_level(choice, authorization)
+
+# Function to print text in rainbow colors
+def print_rainbow(text):
+    colors = [Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.BLUE, Fore.MAGENTA]
+    rainbow_text = ""
+    for char in text:
+        rainbow_text += random.choice(colors) + char
+    print(rainbow_text + Style.RESET_ALL)            
+
 # Main function to run the script
 def main():
     print_welcome_message()
+
     try:
         # Read all authorization tokens from auth.txt
-        auth_tokens = read_auth_from_file()
+        auth_tokens = []
+        try:
+            with open('auth.txt', 'r') as f:
+                for line in f:
+                    authorization = line.strip()
+                    auth_tokens.append(authorization)
+        except FileNotFoundError:
+            print("Error: auth.txt file not found.")
+            return
         
         if not auth_tokens:
             print("No authorization tokens found. Exiting...")
             return
         
         for authorization in auth_tokens:
+            confirm_upgrade = input(Fore.LIGHTBLACK_EX + f"Apakah Anda ingin melakukan upgrade otomatis? (y/n): ").strip().lower()
             
-            # Ask user if they want to claim storage before proceeding
-            claim_choice = input(Fore.BLACK + f"\nApakah Anda ingin klaim storage ? (y/n): ").strip().lower()
-
-            if claim_choice == 'y':
+            if confirm_upgrade == 'y':
+                perform_auto_upgrade(authorization)  # Perform automatic upgrade
+            
+            # After performing or skipping auto upgrade, ask if user wants to claim storage
+            if input(f"Apakah Anda ingin klaim storage? (y/n): ").strip().lower() == 'y':
                 claim_storage_delayed(authorization)  # Claim storage after a delay
             
-            # Fetch user info before auto mining
+             # Fetch user info before auto mining
             user_info = user_detail(authorization)
             if user_info:
-                print("\n============== Detail Akun ===============")
+                print("\n", end="")
+                print_rainbow("============== Detail Akun ==============")
+                print("")
                 print("Nama          :", user_info['first_name'])
                 print("ID            :", user_info['user_id'])
                 print("Balance       :", user_info['balance'])
                 print("Energy        :", user_info['energy_amount'])
-                print("============== Detail Level ===============")
+                print("")
+                print_rainbow("============== Detail Level ==============")
+                print("")
                 print("Click         :", user_info['click_level'])
                 print("Energy        :", user_info['energy_level'])
                 print("Mining Speed  :", user_info['mining_speed_level'])
                 print("Multiplier    :", user_info['multiplier_level'])
                 print("Storage       :", user_info['storage_level'])
-                print("============== Auto Mining ===============")
+                print("")
+                print_rainbow("============== Auto Mining ==============")
+                print("")
 
                 try:
                     # Example usage of auto_mining function
@@ -298,7 +307,7 @@ def main():
             time.sleep(10)
 
     except KeyboardInterrupt:
-        print("\nProses dihentikan oleh pengguna.")
+        print("\nTerima Kasih Telah Menggunakan BOT ini.")
 
 # Entry point of the script
 if __name__ == "__main__":
