@@ -5,6 +5,7 @@ Link Bot : [CELL MEGA Wallet](https://t.me/cEllcoin_bot/app?startapp=6761995095)
 # Fitur BOT :
 
 - Auto Claim Mining
+- Auto Upgrade ( update )
 - Auto Tap ( bisa diatur )
 - Multi Akun
 
